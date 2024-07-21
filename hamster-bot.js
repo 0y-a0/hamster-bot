@@ -1,4 +1,5 @@
 const TelegramBot = require('node-telegram-bot-api');
+const express = require('express');
 
 // Замените 'YOUR_TELEGRAM_BOT_TOKEN' на токен вашего бота
 const token = '6302799889:AAGn-3PU4iPsoNibGHkVrwJ5XzUR36qcmOA';
@@ -8,6 +9,9 @@ const adminChatId = 1119372110;
 
 // Создайте экземпляр бота
 const bot = new TelegramBot(token, { polling: true });
+
+const app = express();
+const port = process.env.PORT || 3000;
 
 bot.setMyCommands([{command: "start",description: "Start the bot"}]);
 
@@ -127,7 +131,9 @@ Give me your *referral link*, but make sure it's _your link_\\. *This is importa
             })
         };
 
-        bot.sendMessage(chatId, `<code>Сhoose which payment method is better 🔑</code><blockquote>My credit card - 5168752023286407</blockquote><blockquote>My PayPal - taktoya1@gmail.com</blockquote><em>You can just sign up in PayPal, connect your card and send by this email 🪄</em>
+        bot.sendMessage(chatId, `<code>Сhoose which payment method is better 🔑</code><blockquote>My credit card - 5168752023286407</blockquote>
+<blockquote>My PayPal - taktoya1@gmail.com</blockquote>You can just sign up in PayPal, connect your card and send by this email 🪄
+
 Attach your nickname or @username from tg to the money transfer ☄️
 
 <b>If you have questions or suggestions for payment, write here @dvd8ew 🪬</b>`, options);
@@ -171,4 +177,13 @@ Attach your nickname or @username from tg to the money transfer ☄️
 
 bot.on('polling_error', (error) => {
     console.error('Polling error:', error);
+});
+
+app.get('/', (req, res) => {
+    res.send('Telegram bot server is running.');
+});
+
+// Запуск сервера
+app.listen(port, () => {
+    console.log(`Server is running on http://localhost:${port}`);
 });
