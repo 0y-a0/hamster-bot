@@ -9,6 +9,10 @@ const adminChatId = 1119372110;
 // Создайте экземпляр бота
 const bot = new TelegramBot(token, { polling: true });
 
+bot.setMyCommands([{command: "start",description: "Start the bot"}]);
+
+
+
 // Объект для хранения данных пользователей
 const userData = {};
 
@@ -26,11 +30,13 @@ const startProcess = (chatId) => {
         amount: null,
         link: null,
         choice: null,
-        paymentConfirmed: false
+        paymentConfirmed: false,
+        awaitingScreenshot: false // добавлено новое состояние
     };
 
     // Определение клавиатуры с цифрами от 1 до 5
     const options = {
+        parse_mode: "MarkdownV2",
         reply_markup: JSON.stringify({
             keyboard: [
                 [{ text: '1' }, { text: '2' }, { text: '3' }, { text: '4' }, { text: '5' }]
@@ -41,7 +47,7 @@ const startProcess = (chatId) => {
     };
 
     // Отправка сообщения с клавиатурой
-    bot.sendMessage(chatId, 'Выберите количество:', options);
+    bot.sendMessage(chatId, '🐹 Select the number of *referrals* you want:', options);
 };
 
 // Обработчик команды /start
@@ -59,7 +65,8 @@ bot.onText(/\/start/, (msg) => {
         amount: null,
         link: null,
         choice: null,
-        paymentConfirmed: false
+        paymentConfirmed: false,
+        awaitingScreenshot: false // добавлено новое состояние
     };
 
     startProcess(chatId);
@@ -69,28 +76,62 @@ bot.onText(/\/start/, (msg) => {
 bot.on('message', (msg) => {
     const chatId = msg.chat.id;
     const text = msg.text;
+    const photo = msg.photo;
 
-    if (userData[chatId] && userData[chatId].amount === null && ['1', '2', '3', '4', '5'].includes(text)) {
+    if (userData[chatId] && userData[chatId].awaitingScreenshot && photo) {
+        // Пользователь отправил скриншот
+        userData[chatId].paymentConfirmed = true;
+        userData[chatId].awaitingScreenshot = false;
+
+        // Отправка подтверждения админу
+        const userInfo = userData[chatId];
+        const message = `
+            Пользователь: ${userInfo.firstName} ${userInfo.lastName} (@${userInfo.username})
+            Количество: ${userInfo.amount}
+            Ссылка: ${userInfo.link}
+            Выбор: ${userInfo.choice}
+        `;
+        bot.sendPhoto(adminChatId, photo[photo.length - 1].file_id,{ caption: message });
+
+        // Подтверждение пользователю
+        bot.sendMessage(chatId, 'Thanks for the confirmation, friend will be added within ~ 3 hours. If you have questions write here @dvd8ew. Want more referrals?', {
+            reply_markup: JSON.stringify({
+                keyboard: [
+                    [{ text: 'Yes' }]
+                ],
+                resize_keyboard: true,
+                one_time_keyboard: true
+            })
+        });
+    } else if (userData[chatId] && userData[chatId].awaitingScreenshot && !photo) {
+        // Пользователь отправил что-то другое вместо скриншота
+        bot.sendMessage(chatId, 'Please send a screenshot.');
+    } else if (userData[chatId] && userData[chatId].amount === null && ['1', '2', '3', '4', '5'].includes(text)) {
         // Запись выбранного количества
         userData[chatId].amount = parseInt(text);
-        bot.sendMessage(chatId, `C вас ${text} баксов. Кидай ссылку:`);
+        bot.sendMessage(chatId, `> It will cost ${text} $  
+Give me your *referral link*, but make sure it's _your link_\\. *This is important*\\. 📍`,{parse_mode: "MarkdownV2"});
     } else if (userData[chatId] && userData[chatId].amount !== null && userData[chatId].link === null) {
         // Запись ссылки
         userData[chatId].link = text;
 
         // Определение клавиатуры с двумя кнопками
         const options = {
+            parse_mode: "HTML",
             reply_markup: JSON.stringify({
                 keyboard: [
-                    [{ text: 'Опция 1' }, { text: 'Опция 2' }]
+                    [{ text: 'Credit Card💳+' }, { text: 'PayPal🅿️+' }]
                 ],
                 resize_keyboard: true,
                 one_time_keyboard: true
             })
         };
 
-        bot.sendMessage(chatId, 'Выберите одну из двух опций:', options);
-    } else if (userData[chatId] && userData[chatId].link !== null && userData[chatId].choice === null && ['Опция 1', 'Опция 2'].includes(text)) {
+        bot.sendMessage(chatId, `<code>Сhoose which payment method is better 🔑</code><blockquote>My credit card - 5168752023286407</blockquote><blockquote>My PayPal - taktoya1@gmail.com</blockquote><em>You can just sign up in PayPal, connect your card and send by this email 🪄</em>
+Attach your nickname or @username from tg to the money transfer ☄️
+
+<b>If you have questions or suggestions for payment, write here @dvd8ew 🪬</b>`, options);
+    } else if (userData[chatId] && userData[chatId].link !== null && userData[chatId].choice === null && ['Credit Card💳+', 'PayPal🅿️+'].includes(text)) {
         // Запись выбора
         userData[chatId].choice = text;
 
@@ -108,37 +149,26 @@ bot.on('message', (msg) => {
         const confirmOptions = {
             reply_markup: JSON.stringify({
                 keyboard: [
-                    [{ text: 'Да' }]
+                    [{ text: 'Yes' }]
                 ],
                 resize_keyboard: true,
                 one_time_keyboard: true
             })
         };
 
-        bot.sendMessage(chatId, 'Вы отправили деньги?', confirmOptions);
-    } else if (userData[chatId] && userData[chatId].choice !== null && text === 'Да' && !userData[chatId].paymentConfirmed) {
+        bot.sendMessage(chatId, 'Did you managed to make the payment? 📫', confirmOptions);
+    } else if (userData[chatId] && userData[chatId].choice !== null && text === 'Yes' && !userData[chatId].paymentConfirmed) {
         // Обновление состояния подтверждения оплаты
-        userData[chatId].paymentConfirmed = true;
-
-        // Отправка подтверждения админу
-        bot.sendMessage(adminChatId, `Пользователь @${userData[chatId].username} подтвердил отправку денег.`);
-        bot.sendMessage(chatId, 'Спасибо за подтверждение!');
-
-        // Отправка вопроса о новом заказе
-        const restartOptions = {
-            reply_markup: JSON.stringify({
-                keyboard: [
-                    [{ text: 'Да' }]
-                ],
-                resize_keyboard: true,
-                one_time_keyboard: true
-            })
-        };
-        bot.sendMessage(chatId, 'Хотите еще купить?', restartOptions);
-    } else if (userData[chatId] && userData[chatId].paymentConfirmed && text === 'Да') {
+        userData[chatId].awaitingScreenshot = true;
+        bot.sendMessage(chatId, 'Post a screenshot of the transaction to prove');
+    } else if (userData[chatId] && userData[chatId].paymentConfirmed && text === 'Yes') {
         // Запуск процесса заново
         startProcess(chatId);
-    } else if (userData[chatId] && userData[chatId].choice !== null && text !== 'Да') {
-        bot.sendMessage(chatId, 'Пожалуйста, подтвердите отправку денег, нажав "Да".');
+    } else if (userData[chatId] && userData[chatId].choice !== null && text !== 'Yes') {
+        bot.sendMessage(chatId, '');
     }
+});
+
+bot.on('polling_error', (error) => {
+    console.error('Polling error:', error);
 });
