@@ -114,7 +114,7 @@ bot.on('message', (msg) => {
         // Запись выбранного количества
         userData[chatId].amount = parseInt(text);
         bot.sendMessage(chatId, `> It will cost ${text} $  
-Give me your *referral link*, but make sure it's _your link_\\. *This is important*\\. 📍`,{parse_mode: "MarkdownV2"});
+Give me your *link from Hamster*🐹, but make sure it's _your link_\\. *This is important*\\. 📍`,{parse_mode: "MarkdownV2"});
     } else if (userData[chatId] && userData[chatId].amount !== null && userData[chatId].link === null) {
         // Запись ссылки
         userData[chatId].link = text;
