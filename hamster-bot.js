@@ -97,7 +97,7 @@ bot.on('message', (msg) => {
         bot.sendMessage(chatId, `> It will cost ${text} $  
 Give me your *link from Hamster*🐹, but make sure it's _your link_\\. *This is important*\\. 📍`, { parse_mode: "MarkdownV2" });
     } else if (userData[chatId] && userData[chatId].amount !== null && userData[chatId].link === null) {
-        if (text.includes('kentId')) {
+        if (text.includes('kentId') || text === '/start') {
             userData[chatId].link = text;
 
             const options = {
