@@ -97,7 +97,7 @@ bot.on('message', (msg) => {
         bot.sendMessage(chatId, `> It will cost ${text} $  
 Give me your *link from Hamster*🐹, but make sure it's _your link_\\. *This is important*\\. 📍`, { parse_mode: "MarkdownV2" });
     } else if (userData[chatId] && userData[chatId].amount !== null && userData[chatId].link === null) {
-        if (text.includes('kentId') || text === '/start') {
+        if (text.includes('kentId')) {
             userData[chatId].link = text;
 
             const options = {
@@ -117,7 +117,7 @@ Give me your *link from Hamster*🐹, but make sure it's _your link_\\. *This is
 Attach your nickname or @username from <b>tg🔷</b> to the money transfer ☄️<b>(not necessary)</b>
 
 <b>If you have questions or suggestions for payment, write here @dvd8ew 🪬</b>`, options);
-        } else {
+        } else if(text !== '/start') {
             bot.sendMessage(chatId, 'The link is incorrect. Please provide a valid link.');
         }
     } else if (userData[chatId] && userData[chatId].link !== null && userData[chatId].choice === null && ['Credit Card💳+', 'PayPal🅿️+'].includes(text)) {
