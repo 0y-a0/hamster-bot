@@ -92,6 +92,14 @@ bot.on('message', (msg) => {
     const photo = msg.photo;
 
     if (!userData[chatId]) return; // Если нет данных пользователя, игнорируем сообщение
+ 
+
+    if (text === '/start') {
+        // Сбрасываем данные пользователя и начинаем процесс заново
+        resetUserData(chatId);
+        return; // Прерываем выполнение, чтобы не обрабатывать следующее сообщение
+    }
+
 
     if (userData[chatId].awaitingScreenshot && photo) {
         userData[chatId].paymentConfirmed = true;
@@ -120,7 +128,9 @@ bot.on('message', (msg) => {
         // Не сбрасываем данные, просто убираем флаг ожидания скриншота
         userData[chatId].awaitingScreenshot = false;
     } else if (userData[chatId].awaitingScreenshot && !photo) {
-        bot.sendMessage(chatId, 'Please send a screenshot with the payment amount🔄');
+       
+        bot.sendMessage(chatId, 'Please send a screenshot with the payment amount🔄')
+        
     } else if (userData[chatId].amount === null && ['1', '2', '3', '4', '5'].includes(text)) {
         userData[chatId].amount = parseInt(text) / 2;
         const ammo = userData[chatId].amount.toFixed(1);
@@ -142,7 +152,8 @@ Give me your *link from Hamster*🐹, but make sure it's _your link_\\. *This is
             };
 
             bot.sendMessage(chatId, `<code>Сhoose which payment method is better 🔑</code><blockquote><b>Credit card💳</b></blockquote>
-<blockquote><b>PayPal🅿️</b></blockquote><blockquote><b>Сryptocurrency ₿✴️</b></blockquote>
+<blockquote><b>PayPal🅿️</b></blockquote>
+<blockquote><b>Сryptocurrency ₿✴️</b></blockquote>
 
 You can just sign up in <b>PayPal</b>, connect your card and send by email ☄️
 
@@ -195,7 +206,7 @@ You can just sign up in <b>PayPal</b>, connect your card and send by email ☄�
             }, 3000);
         } else if (text === 'Crypto ₿✴️+') {
             bot.sendMessage(chatId, 'Сontact @dvd8ew, tell there what cryptocurrency and what network for the cryptocurrency you have chosen✴️')
-            bot.sendMessage(chatId, 'Want more referrals?', {
+            setTimeout(()=>{bot.sendMessage(chatId, 'Want more referrals?', {
                 reply_markup: JSON.stringify({
                     keyboard: [
                         [{ text: 'Yes' }]
@@ -203,7 +214,7 @@ You can just sign up in <b>PayPal</b>, connect your card and send by email ☄�
                     resize_keyboard: true,
                     one_time_keyboard: true
                 })
-            });
+            });},1000)
             userData[chatId].awaitingScreenshot = false; // No screenshot required
         }
     } else if ((userData[chatId].choice === 'Credit Card💳+' || userData[chatId].choice === 'PayPal🅿️+') && text === 'Yes') {
